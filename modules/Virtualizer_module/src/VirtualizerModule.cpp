@@ -128,6 +128,8 @@ bool VirtualizerModule::configure(yarp::os::ResourceFinder &rf)
 	oldPlayerYaw = oldPlayerYaw * M_PI / 180;
 	oldPlayerYaw = Angles::normalizeAngle(oldPlayerYaw);
 
+	m_offset = oldPlayerYaw;
+
 	yInfo() << "First player yaw: " << oldPlayerYaw;
 	return true;
 }
@@ -160,7 +162,7 @@ bool VirtualizerModule::updateModule()
 	playerYaw = playerYaw * M_PI / 180;
 	playerYaw = Angles::normalizeAngle(playerYaw);
 
-	yInfo() << "Current player yaw: " << playerYaw;
+
 	// get the robot orientation
 	yarp::sig::Vector *tmp = m_robotOrientationPort.read(false);
 	if (tmp != NULL)
@@ -174,14 +176,18 @@ bool VirtualizerModule::updateModule()
 		return false;
 	}
 	oldPlayerYaw = playerYaw;
+
+	double playerYawAfterOffset = Angles::shortestAngularDistance(m_offset, playerYaw);
 	// error between the robot orientation and the player orientation
-	double angulareError = threshold(Angles::shortestAngularDistance(m_robotYaw, playerYaw));
+	double angularError = threshold(Angles::shortestAngularDistance(m_robotYaw, playerYawAfterOffset));
+
+	yInfo() << "Current player yaw: " << playerYaw << " after offset: " << playerYawAfterOffset;
 
 	// get the player speed
 	double speedData = (double)(m_cvirtDeviceID->GetMovementSpeed());
 
-	double x = speedData * cos(angulareError) * velocity_factor;
-	double y = speedData * sin(angulareError) * velocity_factor;
+	double x = speedData * cos(angularError) * velocity_factor;
+	double y = speedData * sin(angularError) * velocity_factor;
 
 	// send data to the walking module
 	yarp::os::Bottle cmd, outcome;
@@ -193,7 +199,7 @@ bool VirtualizerModule::updateModule()
 	// send the orientation of the player
 	yarp::sig::Vector& playerOrientationVector = m_playerOrientationPort.prepare();
 	playerOrientationVector.clear();
-	playerOrientationVector.push_back(playerYaw);
+	playerOrientationVector.push_back(playerYawAfterOffset);
 	m_playerOrientationPort.write();
 
 	return true;

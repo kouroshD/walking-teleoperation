@@ -26,6 +26,7 @@
 class VirtualizerModule : public yarp::os::RFModule
 {
 private:
+	double m_offset;
     double m_dT; /**< RFModule period. */
     double m_deadzone; /**< Value of the deadzone. */
     double m_robotYaw;

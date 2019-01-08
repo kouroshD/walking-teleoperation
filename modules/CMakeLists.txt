@@ -3,7 +3,7 @@
 # Authors: Giulio Romualdi <giulio.romualdi@iit.it>
 
 add_subdirectory(Utils)
-add_subdirectory(Oculus_module)
+# add_subdirectory(Oculus_module)
 if (MSVC)
   add_subdirectory(Virtualizer_module)
 endif (MSVC)

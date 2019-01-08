@@ -17,6 +17,7 @@
 #include <yarp/os/Property.h>
 #include <yarp/os/Value.h>
 #include <yarp/sig/Vector.h>
+#include <yarp/os/BufferedPort.h>
 
 
 namespace Angles

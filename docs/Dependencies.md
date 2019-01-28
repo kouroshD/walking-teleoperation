@@ -140,7 +140,7 @@
 
       - Add and append the following variables to the User Environmental Variable:
         ```     
-        OculusSDK_ROOT: <path to codes workspace>\OculusSDK' (variable type is String)
+        OculusSDK_ROOT: <path to codes workspace>\OculusSDK (variable type is String)
         Path: <path to codes workspace>\OculusSDK\3rdParty\Windows Kits\8.1\Redist\D3D\x64
         ```      
 

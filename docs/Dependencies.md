@@ -27,22 +27,22 @@
       - the library has the makefiles, so go to the 'glew\glew-2.1.0\glew-2.1.0\build\vc12' and using the VS15 (VS 2017) build the library (release and debug!)
       
       - Add the following variables value in robotology/yarp using CMake GUI (search for glew!)
-              ```
-              GLEW_INCLUDE_DIR: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/include
+        ```
+        GLEW_INCLUDE_DIR: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/include
                (inside this folder you should find the GL folder and inside that the header files)
           
-              GLEW_LIBRARY_DEBUG: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Debug/x64/glew32d.lib
+        GLEW_LIBRARY_DEBUG: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Debug/x64/glew32d.lib
               
-              GLEW_LIBRARY_RELEASE: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Release/x64/glew32.lib
+        GLEW_LIBRARY_RELEASE: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Release/x64/glew32.lib
               
-              YARP_USE_GLEW: check the box
-              ```
+        YARP_USE_GLEW: check the box
+        ```
       - Append the following directories to the `Path` User environmental variable, for example using the [Rapid Environment Editor](https://www.rapidee.com):
-      
-                `Path`: (Expandable string)
-                    `<path to codes workspace>\glew\glew-2.1.0\glew-2.1.0\bin\Release\x64`
-                    `<path to codes workspace>\glew\glew-2.1.0\glew-2.1.0\bin\Debug\x64`
-  
+        ```
+        Path: (Expandable string)
+                    <path to codes workspace>\glew\glew-2.1.0\glew-2.1.0\bin\Release\x64
+                    <path to codes workspace>\glew\glew-2.1.0\glew-2.1.0\bin\Debug\x64
+        ```  
   
       - Don't forget to configure, generate the cmake (cmake gui --> robotology yarp) and build release mode the yarp using vs15.  
       

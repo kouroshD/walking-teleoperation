@@ -65,26 +65,25 @@
       ```
       CMAKE_INSTALL_PREFIX: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install
       ```
-      - After builing the project, install it.
+      - After builing the project, install it as well.
 
       - Add the following paths to the variables of robotology/YARP (cmake gui --> robotology yarp); as the yarpdev which gets the data from the sdk of the ovr and publishes in yarp framework, has dependencies on this library:
       
-              ```
-              GLFW3_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3 (inside this folder you should find the cmake files)
+      ```
+      GLFW3_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3 (inside this folder you should find the cmake files)
  
-              GLFW3_GLFW_LIBRARY: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3
+      GLFW3_GLFW_LIBRARY: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3
 
-
-              GLFW3_INCLUDE_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/include` (inside that you should find the GLFW folder, and inside it the header files)
+      GLFW3_INCLUDE_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/include` (inside that you should find the GLFW folder, and inside it the header files)
               
-              GLFW3_OPENGL_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib` (you should be able to find the glfw.lib file)
+      GLFW3_OPENGL_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib` (you should be able to find the glfw.lib file)
               
-              YARP_USE_GLFW3: check the box
-              ```
+      YARP_USE_GLFW3: check the box
+      ```
       - Add the following varibale to the User environmental variable:
-             
-              `GLFW3_DIR`= `<path to codes workspace>\glfw\glfw-3.2.1\glfw-3.2.1\build\install` (variable type is String)
-             
+      ```       
+      GLFW3_DIR= <path to codes workspace>\glfw\glfw-3.2.1\glfw-3.2.1\build\install (variable type is String)
+      ```    
       - Don't forget to configure, generate the cmake (cmake gui --> robotology yarp) and build release mode the yarp using vs15.  
              
       - if you have problems with compiling GLFW3, [this link](https://www.glfw.org/docs/latest/compile_guide.html#compile_generate) or [here](https://github.com/nigels-com/glew) may help.
@@ -101,41 +100,51 @@
         `\LibOVRKernel\Projects\Windows\VS2015\LibOVRKernel.vcxproj`
         
         Before building the projects change the follwing options using VS:
-        - LibOVR or LibOVRKernel projects -> properties -> C/C++ -> Code Generation:
+        ```
+        LibOVR or LibOVRKernel projects -> properties -> C/C++ -> Code Generation:
          
-         Configuration: Debug --> Runtime Library: Multi-threaded Debug DLL(/MDd);
+        Configuration: Debug --> Runtime Library: Multi-threaded Debug DLL(/MDd);
          
-         Configuration: Release --> Runtime Library: Multi-threaded DLL(/MD)
-         
+        Configuration: Release --> Runtime Library: Multi-threaded DLL(/MD)
+        ```
         After this changes, build the projects.
         
       - Add the following paths to the variables of robotology/YARP (because the yarpdev which gets the data from the sdk of the ovr and publishes in yarp framework, has dependencies on this library)
           
-          
-              `LibOVR_LibOVRKernel_INCLUDE_DIR`:`<path to codes workspace>/OculusSDK/LibOVRKernel/Src`
+        ```  
+        LibOVR_LibOVRKernel_INCLUDE_DIR:<path to codes workspace>/OculusSDK/LibOVRKernel/Src
               
-              `LibOVR_LibOVRKernel_LIBRARY_DEBUG`:`<path to codes workspace>/OculusSDK/LibOVRKernel/Lib/Windows/x64/Debug/VS2015/LibOVRKernel.lib`
+        LibOVR_LibOVRKernel_LIBRARY_DEBUG:<path to codes workspace>/OculusSDK/LibOVRKernel/Lib/Windows/x64/Debug/VS2015/LibOVRKernel.lib
 
-              `LibOVR_LibOVRKernel_LIBRARY_RELEASE`: `<path to codes workspace>/OculusSDK/LibOVRKernel/Lib/Windows/x64/Release/VS2015/LibOVRKernel.lib`
+        LibOVR_LibOVRKernel_LIBRARY_RELEASE: <path to codes workspace>/OculusSDK/LibOVRKernel/Lib/Windows/x64/Release/VS2015/LibOVRKernel.lib
 
-              `LibOVR_LibOVR_Extras_INCLUDE_DIR`: `<path to codes workspace>/OculusSDK/LibOVR/Include/Extras`
+        LibOVR_LibOVR_Extras_INCLUDE_DIR: <path to codes workspace>/OculusSDK/LibOVR/Include/Extras
 
-              `LibOVR_LibOVR_INCLUDE_DIR:PATH`: `<path to codes workspace>/OculusSDK/LibOVR/Include`
+        LibOVR_LibOVR_INCLUDE_DIR: <path to codes workspace>/OculusSDK/LibOVR/Include
 
-              `LibOVR_LibOVR_LIBRARY_DEBUG`: `<path to codes workspace>/OculusSDK/LibOVR/Lib/Windows/x64/Debug/VS2015/LibOVR.lib`
+        LibOVR_LibOVR_LIBRARY_DEBUG: <path to codes workspace>/OculusSDK/LibOVR/Lib/Windows/x64/Debug/VS2015/LibOVR.lib
 
-              `LibOVR_LibOVR_LIBRARY_RELEASE`: `<path to codes workspace>/OculusSDK/LibOVR/Lib/Windows/x64/Release/VS2015/LibOVR.lib`
+        LibOVR_LibOVR_LIBRARY_RELEASE: <path to codes workspace>/OculusSDK/LibOVR/Lib/Windows/x64/Release/VS2015/LibOVR.lib
 
-              `YARP_USE_LOBOVR`: check the box
+        YARP_USE_LOBOVR: check the box
+        ENABLE_yarpmod_ovrheadset: check the box
+        ```
+        Before building the projects change the follwing options using VS:
+        ```
+        Yarp project -> Plugins -> Devices -> yarp_ovrheadset :: properties -> C/C++ -> Code Generation:
+         
+        Configuration: Debug --> Runtime Library: Multi-threaded Debug DLL(/MDd);
+         
+        Configuration: Release --> Runtime Library: Multi-threaded DLL(/MD)
+        ```
 
-      - Add and append the following variables to the User environmental variable:
-             
-              `OculusSDK_ROOT`= `<path to codes workspace>\OculusSDK' (variable type is String)`
-              `Path`= `<path to codes workspace>\OculusSDK\3rdParty\Windows Kits\8.1\Redist\D3D\x64`
-              
-             
+      - Add and append the following variables to the User Environmental Variable:
+        ```     
+        OculusSDK_ROOT: <path to codes workspace>\OculusSDK' (variable type is String)
+        Path: <path to codes workspace>\OculusSDK\3rdParty\Windows Kits\8.1\Redist\D3D\x64
+        ```      
+
       - Configure, generate the cmake (cmake gui --> robotology yarp) and build the yarp using vs15.
-
 
 5. **Cyberith SDK:**   To allow the virtualizer module to capture the operator data, the virtualizer needs two modules to download: the CybSDK_app (used for the calibration!) and the CybSDK:
 
@@ -144,5 +153,6 @@
    2. `CybSDK`: you can download the application from [this link](https://developer.cyberith.com/downloads). Go to 'SDK' tab, download the 'C++ SDK for Windows (Developed for: Visual Studio 2015 Community)'. Copy the download application to the workspace. in theory, we should build it in our Windows machine, but time being it is already built (there exists the .dll file) and is working, so you do not need to build it.
    
       - Append the following variables to the User environmental variable `Path`:
-             
-              `Path`= `<path to codes workspace>\CybSDK\src\CybSDK_Windows_Cpp_Console\Plugins\x86_64`
+        ```     
+        Path: <path to codes workspace>\CybSDK\src\CybSDK_Windows_Cpp_Console\Plugins\x86_64
+        ```

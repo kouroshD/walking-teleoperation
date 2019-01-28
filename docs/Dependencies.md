@@ -8,7 +8,7 @@
 
    + if you are not using superbuild, look at [this link](http://www.yarp.it/) for installing YARP.
    + Use YARP and icub repos using the devel branch instead of the master branch. The main reason is beacuase of the `camCalibWithPose` application.
-   + Enable the following options:
+   + Enable the following options (be sure that this option is enabled in all the machines for the image):
    ```
    ENABLE_yarpcar_mjpeg
    MJPEG_AUTOCOMPRESS
@@ -27,16 +27,16 @@
       - the library has the makefiles, so go to the 'glew\glew-2.1.0\glew-2.1.0\build\vc12' and using the VS15 (VS 2017) build the library (release and debug!)
       
       - Add the following variables value in robotology/yarp using CMake GUI (search for glew!)
-      
-              `GLEW_INCLUDE_DIR`: '<path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/include
+              ```
+              GLEW_INCLUDE_DIR: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/include
                (inside this folder you should find the GL folder and inside that the header files)
           
-              `GLEW_LIBRARY_DEBUG`: '<path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Debug/x64/glew32d.lib'
-          
-              `GLEW_LIBRARY_RELEASE`: '<path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Release/x64/glew32.lib'
+              GLEW_LIBRARY_DEBUG: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Debug/x64/glew32d.lib
               
-              `YARP_USE_GLEW`: check the box
-         
+              GLEW_LIBRARY_RELEASE: <path to codes workspace>/glew/glew-2.1.0/glew-2.1.0/lib/Release/x64/glew32.lib
+              
+              YARP_USE_GLEW: check the box
+              ```
       - Append the following directories to the `Path` User environmental variable, for example using the [Rapid Environment Editor](https://www.rapidee.com):
       
                 `Path`: (Expandable string)
@@ -58,25 +58,36 @@
       - Use CMake GUI to to configure and generate the project.
           
 
-      - After that using the VS15 (VS 2017) build the project.
-          
+      - After that, using the VS15 (VS 2017) build the project.
+      
+      
+      - Add the following value to the `CMAKE_INSTALL_PREFIX` of the glfw project
+      ```
+      CMAKE_INSTALL_PREFIX: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install
+      ```
+      - After builing the project, install it.
 
       - Add the following paths to the variables of robotology/YARP (cmake gui --> robotology yarp); as the yarpdev which gets the data from the sdk of the ovr and publishes in yarp framework, has dependencies on this library:
-         
-              `GLFW3_DIR`: `<path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3` (inside this folder you should find the cmake files)
-          
-              `GLFW3_INCLUDE_DIR`: `<path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/include` (inside that you should find the GLFW folder, and inside it the header files)
-          
-              `GLFW3_OPENGL_DIR`: `<path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib` (you should be able to find the glfw.lib file)
-              `YARP_USEGLFW3`: check the box
+      
+              ```
+              GLFW3_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3 (inside this folder you should find the cmake files)
+ 
+              GLFW3_GLFW_LIBRARY: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib/cmake/glfw3
 
+
+              GLFW3_INCLUDE_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/include` (inside that you should find the GLFW folder, and inside it the header files)
+              
+              GLFW3_OPENGL_DIR: <path to codes workspace>/glfw/glfw-3.2.1/glfw-3.2.1/build/install/lib` (you should be able to find the glfw.lib file)
+              
+              YARP_USE_GLFW3: check the box
+              ```
       - Add the following varibale to the User environmental variable:
              
               `GLFW3_DIR`= `<path to codes workspace>\glfw\glfw-3.2.1\glfw-3.2.1\build\install` (variable type is String)
              
       - Don't forget to configure, generate the cmake (cmake gui --> robotology yarp) and build release mode the yarp using vs15.  
              
-      - if you have problems with compiling GLFW, [this link](https://www.glfw.org/docs/latest/compile_guide.html#compile_generate) or [here](https://github.com/nigels-com/glew) may help.
+      - if you have problems with compiling GLFW3, [this link](https://www.glfw.org/docs/latest/compile_guide.html#compile_generate) or [here](https://github.com/nigels-com/glew) may help.
           
           
     4. `LibOVR`: to dowload the SDK, you can go to [this website](https://developer.oculus.com/downloads/), choose "Native Windows", then "Core Package: OCULUS SDK for windows". Select the version 1.16.0 to download. Or easily follow this [link](https://developer.oculus.com/downloads/package/oculus-sdk-for-windows/1.16.0/) and choose version 1.16.0 to download.
@@ -88,7 +99,16 @@
         `\LibOVR\Projects\Windows\VS2015\LibOVR.vcxproj`
         
         `\LibOVRKernel\Projects\Windows\VS2015\LibOVRKernel.vcxproj`
-      
+        
+        Before building the projects change the follwing options using VS:
+        - LibOVR or LibOVRKernel projects -> properties -> C/C++ -> Code Generation:
+         
+         Configuration: Debug --> Runtime Library: Multi-threaded Debug DLL(/MDd);
+         
+         Configuration: Release --> Runtime Library: Multi-threaded DLL(/MD)
+         
+        After this changes, build the projects.
+        
       - Add the following paths to the variables of robotology/YARP (because the yarpdev which gets the data from the sdk of the ovr and publishes in yarp framework, has dependencies on this library)
           
           

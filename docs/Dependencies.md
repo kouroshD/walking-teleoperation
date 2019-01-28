@@ -7,6 +7,12 @@
 2. **YARP:** Using superbuild install the [YARP](http://www.yarp.it/): to handle the comunication with the robot with both ovrheadset and SDLjoypad drivers;
 
    + if you are not using superbuild, look at [this link](http://www.yarp.it/) for installing YARP.
+   + Use YARP and icub repos using the devel branch instead of the master branch. The main reason is beacuase of the `camCalibWithPose` application.
+   + Enable the following options:
+   ```
+   ENABLE_yarpcar_mjpeg
+   MJPEG_AUTOCOMPRESS
+   ```
 
 3. **QT5 and Eigen3:** In the Super-build, enable the QT5 and Eigen3 to install (follow the instructions [here](https://github.com/robotology/robotology-superbuild#system-libraries)).
 

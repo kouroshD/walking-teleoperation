@@ -8,7 +8,7 @@
 
    + if you are not using superbuild, look at [this link](http://www.yarp.it/) for installing YARP.
    + Use YARP and icub repos using the devel branch instead of the master branch. The main reason is beacuase of the `camCalibWithPose` application.
-   + Enable the following options (be sure that this option is enabled in all the machines for the image):
+   + Enable the following options (be sure that this option is enabled in all the machines for the image communication):
    ```
    ENABLE_yarpcar_mjpeg
    MJPEG_AUTOCOMPRESS
@@ -16,15 +16,15 @@
 
 3. **QT5 and Eigen3:** In the Super-build, enable the QT5 and Eigen3 to install (follow the instructions [here](https://github.com/robotology/robotology-superbuild#system-libraries)).
 
-4. **Oculus SDK:** In order to install the oculus SDK, you need to install first the Oculus app on windows (oculus application), install the depenecies(GLEW, GLFW3), and finally install the sdk (LibOVR):
+4. **Oculus SDK:** In order to install the oculus SDK, you need to install first the Oculus app on windows (oculus application), install the depenecies (GLEW, GLFW3), and finally install the sdk (LibOVR):
 
    1. `oculus application`: Download and install the oculus [setup application](https://www.oculus.com/setup/). It is used for both the Oculus Virtual Reality headset (ovrheadset) and joypads (touch controller).
           
-   2. `GLEW`: Dowload the version 2.1.0 of the [glew libarary](http://glew.sourceforge.net/index.html) from this[link](https://sourceforge.net/projects/glew/files/glew/2.1.0/) (if you want to dowload from the [glew libarary](http://glew.sourceforge.net/index.html) select the source file)
+   2. `GLEW`: Dowload the version 2.1.0 of the [glew libarary](http://glew.sourceforge.net/index.html) from this [link](https://sourceforge.net/projects/glew/files/glew/2.1.0/) (if you want to dowload from the [glew libarary](http://glew.sourceforge.net/index.html) select the source file)
      
       - extract and copy the glew library to your robot/code workspace (in our case in same path of robotology-superbuild)
       
-      - the library has the makefiles, so go to the 'glew\glew-2.1.0\glew-2.1.0\build\vc12' and using the VS15 (VS 2017) build the library (release and debug!)
+      - the library has the makefiles, so go to the `glew\glew-2.1.0\glew-2.1.0\build\vc12` path and using the VS15 (VS 2017) build the library (release and debug!)
       
       - Add the following variables value in robotology/yarp using CMake GUI (search for glew!)
         ```
@@ -107,7 +107,7 @@
          
         Configuration: Release --> Runtime Library: Multi-threaded DLL(/MD)
         ```
-        After this changes, build the projects.
+        After these changes, build the projects.
         
       - Add the following paths to the variables of robotology/YARP (because the yarpdev which gets the data from the sdk of the ovr and publishes in yarp framework, has dependencies on this library)
           
@@ -146,11 +146,11 @@
 
       - Configure, generate the cmake (cmake gui --> robotology yarp) and build the yarp using vs15.
 
-5. **Cyberith SDK:**   To allow the virtualizer module to capture the operator data, the virtualizer needs two modules to download: the CybSDK_app (used for the calibration!) and the CybSDK:
+5. **Cyberith SDK:**   To allow the virtualizer module to capture the operator data, the virtualizer needs two modules to download: the CybSDK_app (used for the calibration) and the CybSDK:
 
-   1. `CybSDK_app`: you can download the application from [this link](https://developer.cyberith.com/downloads). Go to 'Tools' tab, download the 'Virtualizer Control Panel'. Copy the download application to the workspace. Everytime start using the virtualizer, please calibrate it using this application.
+   1. `CybSDK_app`: you can download the application from [this link](https://developer.cyberith.com/downloads). Go to `Tools` tab, download the `Virtualizer Control Panel`. Copy the download application to the workspace. Everytime start using the virtualizer, please calibrate it using this application.
      
-   2. `CybSDK`: you can download the application from [this link](https://developer.cyberith.com/downloads). Go to 'SDK' tab, download the 'C++ SDK for Windows (Developed for: Visual Studio 2015 Community)'. Copy the download application to the workspace. in theory, we should build it in our Windows machine, but time being it is already built (there exists the .dll file) and is working, so you do not need to build it.
+   2. `CybSDK`: you can download the application from [this link](https://developer.cyberith.com/downloads). Go to `SDK` tab, download the `C++ SDK for Windows (Developed for: Visual Studio 2015 Community)`. Copy the download application to the workspace. in theory, we should build it in our Windows machine, but time being it is already built (there exists the .dll file) and is working, so you do not need to build it.
    
       - Append the following variables to the User environmental variable `Path`:
         ```     

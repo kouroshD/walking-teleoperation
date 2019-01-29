@@ -94,11 +94,11 @@
       - Extract and place the package in your workspace (in our case in same path of robotology-superbuild), inside that there are two libraries which we need: LibOVR, and LibOVRKernel.
       
       - Build (both release and debug) the projects inside the sdk using VS15: 
+        ```
+        \LibOVR\Projects\Windows\VS2015\LibOVR.vcxproj
         
-        `\LibOVR\Projects\Windows\VS2015\LibOVR.vcxproj`
-        
-        `\LibOVRKernel\Projects\Windows\VS2015\LibOVRKernel.vcxproj`
-        
+        \LibOVRKernel\Projects\Windows\VS2015\LibOVRKernel.vcxproj
+        ```
         Before building the projects change the follwing options using VS:
         ```
         LibOVR or LibOVRKernel projects -> properties -> C/C++ -> Code Generation:

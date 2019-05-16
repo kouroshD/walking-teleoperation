@@ -198,15 +198,6 @@ bool OculusModule::configure(yarp::os::ResourceFinder& rf)
     m_useXsens = generalOptions.check("useXsens", yarp::os::Value(false)).asBool();
     yInfo() << "Teleoperation uses Xsens: " << m_useXsens;
 
-    //    m_wholeBodyRetargeting = std::make_unique<WholeBodyRetargeting>();
-    //    yarp::os::Bottle& wholeBodyRetargetingOptions = rf.findGroup("WHOLE_BODY_RETARGETING");
-    //    wholeBodyRetargetingOptions.append(generalOptions);
-    //    if (!m_wholeBodyRetargeting->configure(wholeBodyRetargetingOptions,getName()))
-    //    {
-    //        yError() << "[OculusModule::configure] Unable to initialize the whole body
-    //        retargeting."; return false;
-    //    }
-
     yarp::os::Bottle& oculusOptions = rf.findGroup("OCULUS");
     if (!configureOculus(oculusOptions))
     {
@@ -280,15 +271,6 @@ bool OculusModule::configure(yarp::os::ResourceFinder& rf)
         yError() << "[OculusModule::configure] Unable to initialize the right fingers retargeting.";
         return false;
     }
-
-    //    m_wholeBodyRetargeting = std::make_unique<WholeBodyRetargeting>();
-    //    yarp::os::Bottle& wholeBodyRetargetingOptions = rf.findGroup("WHOLE_BODY_RETARGETING");
-    //    wholeBodyRetargetingOptions.append(generalOptions);
-    //    if (!m_wholeBodyRetargeting->configure(wholeBodyRetargetingOptions,getName()))
-    //    {
-    //        yError() << "[OculusModule::configure] Unable to initialize the whole body
-    //        retargeting."; return false;
-    //    }
 
     // open ports
     std::string portName;
@@ -411,17 +393,6 @@ bool OculusModule::getTransforms()
 {
     if (m_useXsens)
     {
-
-        // Complete the implementation of the Reading the Joints
-        //        yarp::sig::Vector humanJointValues;
-        //        yarp::os::Bottle* desiredWBJoints = NULL;
-        //        desiredWBJoints=m_wholeBodyHumanJointsPort.read(false);
-        //        if(desiredWBJoints != NULL)
-        //        {
-        //           yInfo()<< "desiredWBJoints size: "<<desiredWBJoints->size();
-        //           // fill the humanJointValue vectors
-        //           m_wholeBodyRetargeting->setJointValues(humanJointValues);
-        //        }
 
     } else
     {
@@ -552,15 +523,9 @@ bool OculusModule::updateModule()
 
         if (m_useXsens)
         {
-            // use Xsens data to update robot movements
-            // m_wholeBodyRetargeting->setJointValues(const yarp::sig::Vector& jointValues)
-            //            yarp::sig::Vector& WBSmoothedJointValues =
-            //            m_wholeBodyHumanSmoothedJointsPort.prepare();
-            //            m_wholeBodyRetargeting->getSmoothedJointValues(WBSmoothedJointValues);
-            //            m_wholeBodyHumanSmoothedJointsPort.write();
+
         } else
         {
-
             m_head->setPlayerOrientation(m_playerOrientation);
             m_head->setDesiredHeadOrientation(m_oculusRoot_T_headOculus);
             // m_head->setDesiredHeadOrientation(desiredHeadOrientationVector(0),

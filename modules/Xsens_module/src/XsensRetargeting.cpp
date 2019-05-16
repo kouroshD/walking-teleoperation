@@ -3,21 +3,6 @@
 #include <iterator>
 #include <sstream>
 
-// std::vector<double> XsensRetargeting::split(const std::string& str, const std::string& delim)
-//{
-//    std::vector<double> tokens;
-//    size_t prev = 0, pos = 0;
-//    do
-//    {
-//        pos = str.find(delim, prev);
-//        if (pos == std::string::npos) pos = str.length();
-//        std::string token =  str.substr(prev, pos-prev);
-//        if (!token.empty()) tokens.push_back(std::stod(token));
-//        prev = pos + delim.length();
-//    }
-//    while (pos < str.length() && prev < str.length());
-//    return tokens;
-//}
 XsensRetargeting::XsensRetargeting(){};
 
 XsensRetargeting::~XsensRetargeting(){};
@@ -32,7 +17,6 @@ bool XsensRetargeting::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    //    yarp::os::Bottle& generalOptions = rf.findGroup("GENERAL");
     // get the period
     m_dT = rf.check("samplingTime", yarp::os::Value(0.1)).asDouble();
 

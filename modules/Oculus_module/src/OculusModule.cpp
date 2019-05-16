@@ -365,11 +365,8 @@ bool OculusModule::close()
         m_torso->controlHelper()->close();
     }
 
-    //    m_wholeBodyRetargeting->controlHelper()->close();
-
     m_joypadDevice.close();
     m_transformClientDevice.close();
-    // remember: close the wb retargeting
 
     return true;
 }
@@ -391,10 +388,7 @@ double OculusModule::evaluateDesiredFingersVelocity(unsigned int squeezeIndex,
 
 bool OculusModule::getTransforms()
 {
-    if (m_useXsens)
-    {
-
-    } else
+    if (!m_useXsens)
     {
         // check if everything is ok
         if (!m_frameTransformInterface->frameExists(m_rootFrameName))
@@ -521,10 +515,7 @@ bool OculusModule::updateModule()
                 m_robotYaw = Angles::normalizeAngle((*robotOrientation)(0));
         }
 
-        if (m_useXsens)
-        {
-
-        } else
+        if (!m_useXsens)
         {
             m_head->setPlayerOrientation(m_playerOrientation);
             m_head->setDesiredHeadOrientation(m_oculusRoot_T_headOculus);

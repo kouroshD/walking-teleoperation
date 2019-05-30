@@ -198,6 +198,47 @@ bool OculusModule::configure(yarp::os::ResourceFinder& rf)
     m_useXsens = generalOptions.check("useXsens", yarp::os::Value(false)).asBool();
     yInfo() << "Teleoperation uses Xsens: " << m_useXsens;
 
+    //***************************//
+    // load the model
+    const std::string urdfFileName
+        = generalOptions.check("urdf", yarp::os::Value("model.urdf")).asString();
+    std::string urdfFilePath = rf.findFile(urdfFileName);
+    if (urdfFilePath.empty())
+    {
+        yError() << "[OculusModule::configure] Failed to find file" << rf.find("urdf").asString();
+        return false;
+    }
+
+    yarp::os::Value* imageJointsListYarp;
+    if (!generalOptions.check("image_joints_list", imageJointsListYarp))
+    {
+        yError() << "[OculusModule::configure] Unable to find image_joints_list into config file.";
+        return false;
+    }
+    if (!YarpHelper::yarpListToStringVector(imageJointsListYarp, m_imageJointsList))
+    {
+        yError() << "[OculusModule::configure] Unable to convert yarp list into a vector of "
+                    "strings.";
+        return false;
+    }
+
+    if (!m_modelLoader.loadReducedModelFromFile(urdfFilePath, m_imageJointsList)
+        || !m_modelLoader.isValid())
+    {
+        yError() << "[OculusModule::configure] Failed to load model" << urdfFilePath;
+        return false;
+    }
+
+    yInfo() << "[OculusModule::configure] loaded model is valid: " << m_modelLoader.isValid();
+    yInfo() << "urdf file name and path: " << urdfFileName << " ; " << urdfFilePath;
+    yInfo() << m_modelLoader.model().toString();
+    yInfo() << m_modelLoader.model().getNrOfLinks()
+            << " , joints: " << m_modelLoader.model().getNrOfJoints();
+    yInfo() << "base link: "
+            << m_modelLoader.model().getLinkName(m_modelLoader.model().getDefaultBaseLink());
+
+    //***************************//
+
     yarp::os::Bottle& oculusOptions = rf.findGroup("OCULUS");
     if (!configureOculus(oculusOptions))
     {
@@ -622,30 +663,63 @@ bool OculusModule::updateModule()
     yarp::os::Bottle& imagesOrientation = m_imagesOrientationPort.prepare();
     imagesOrientation.clear();
 
-    double neckPitch, neckRoll, neckYaw;
+    //    double neckPitch, neckRoll, neckYaw;
+    iDynTree::Vector3 gravity;
+    gravity.zero();
+    gravity(2) = -9.81;
+
     yarp::sig::Vector neckEncoders = m_head->controlHelper()->jointEncoders();
-    neckPitch = neckEncoders(0);
-    neckRoll = neckEncoders(1);
-    neckYaw = neckEncoders(2);
+    iDynTree::VectorDynSize s_neck;
+    iDynTree::toiDynTree(neckEncoders, s_neck);
+    //    neckPitch = neckEncoders(0);
+    //    neckRoll = neckEncoders(1);
+    //    neckYaw = neckEncoders(2);
 
-    iDynTree::Rotation chest_R_head
-        = HeadRetargeting::forwardKinematics(neckPitch, neckRoll, neckYaw);
+    //    iDynTree::Rotation chest_R_head
+    //        = HeadRetargeting::forwardKinematics(neckPitch, neckRoll, neckYaw);
 
-    iDynTree::Rotation root_R_chest = iDynTree::Rotation::Identity();
+    //    iDynTree::Rotation root_R_chest = iDynTree::Rotation::Identity();
+    iDynTree::VectorDynSize s_torso;
+    s_torso.resize(m_torso->controlHelper()->getDoFs());
     if (m_useXsens)
     {
-        double torsoPitch, torsoRoll, torsoYaw;
+        //        double torsoPitch, torsoRoll, torsoYaw;
         yarp::sig::Vector torsoEncoders = m_torso->controlHelper()->jointEncoders();
-        torsoPitch = torsoEncoders(0);
-        torsoRoll = torsoEncoders(1);
-        torsoYaw = torsoEncoders(2);
-        root_R_chest = TorsoRetargeting::forwardKinematics(torsoPitch, torsoRoll, torsoYaw);
+        iDynTree::toiDynTree(torsoEncoders, s_torso);
+
+        //        torsoPitch = torsoEncoders(0);
+        //        torsoRoll = torsoEncoders(1);
+        //        torsoYaw = torsoEncoders(2);
+        //        root_R_chest = TorsoRetargeting::forwardKinematics(torsoPitch, torsoRoll,
+        //        torsoYaw);
     }
+
     iDynTree::Rotation inertial_R_root = iDynTree::Rotation::RotZ(-m_playerOrientation);
+    iDynTree::VectorDynSize s_image,
+        sdot_image; // joint values and velocities used for image rotation
+    s_image.fillBuffer(s_neck.data());
+    s_image.fillBuffer(s_torso.data());
+    if (s_image.size() != m_imageJointsList.size())
+    {
+        yError() << "[OculusModule::updateModule] the size of the written joints for the image and "
+                    "online read joint values are not equal";
+        return false;
+    }
+    sdot_image.resize(s_image.size());
+    iDynTree::Twist base_velocity = iDynTree::Twist::Zero();
+    iDynTree::Transform inertial_T_root(inertial_R_root, iDynTree::Position::Zero());
+    m_kinDyn.setRobotState(inertial_T_root, s_image, base_velocity, sdot_image, gravity);
+    iDynTree::FrameIndex refFrameIndex, frameIndex;
+    refFrameIndex = m_modelLoader.model().getFrameIndex("base_link");
+    frameIndex = m_modelLoader.model().getFrameIndex("head");
+
+    iDynTree::Transform inertial_T_head = m_kinDyn.getRelativeTransform(refFrameIndex, frameIndex);
+
+    iDynTree::Vector3 inertial_R_headRPY = inertial_T_head.getRotation().asRPY();
 
     // inertial_R_head is used to simulate an imu required by the cam calibration application
-    iDynTree::Rotation inertial_R_head = inertial_R_root * root_R_chest * chest_R_head;
-    iDynTree::Vector3 inertial_R_headRPY = inertial_R_head.asRPY();
+    //    iDynTree::Rotation inertial_R_head = inertial_R_root * root_R_chest * chest_R_head;
+    //    iDynTree::Vector3 inertial_R_headRPY = inertial_R_head.asRPY();
 
     imagesOrientation.addDouble(iDynTree::rad2deg(inertial_R_headRPY(0)));
     imagesOrientation.addDouble(iDynTree::rad2deg(inertial_R_headRPY(1)));

@@ -27,6 +27,8 @@
 #include <HandRetargeting.hpp>
 #include <HeadRetargeting.hpp>
 #include <TorsoRetargeting.hpp>
+#include <iDynTree/KinDynComputations.h>
+#include <iDynTree/ModelIO/ModelLoader.h>
 
 /**
  * OculusModule is the main core of the Oculus application. It is goal is to evaluate retrieve the
@@ -129,6 +131,10 @@ private:
 
     double m_playerOrientation; /**< Player orientation (read by the Virtualizer)
                                    only yaw. */
+    iDynTree::ModelLoader m_modelLoader; /**< Model loader class. */
+    std::vector<std::string> m_imageJointsList; /**< Vector containing the name of the joints for
+                                                   the image rotation for oculus. */
+    iDynTree::KinDynComputations m_kinDyn; /**< KinDynComputations solver. */
 
     /**
      * Configure the Oculus.

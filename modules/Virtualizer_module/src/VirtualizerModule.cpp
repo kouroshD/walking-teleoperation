@@ -66,6 +66,18 @@ bool VirtualizerModule::configure(yarp::os::ResourceFinder& rf)
     }
     setName(name.c_str());
 
+	// set scales for walking
+    if (!YarpHelper::getDoubleFromSearchable(rf, "scale_X", m_scale_X))
+    {
+        yError() << "[configure] Unable to get scale_X from a searchable";
+        return false;
+    }
+    if (!YarpHelper::getDoubleFromSearchable(rf, "scale_Y", m_scale_Y))
+    {
+        yError() << "[configure] Unable to get scale_Y from a searchable";
+        return false;
+    }
+
     // set deadzone
     if (!YarpHelper::getDoubleFromSearchable(rf, "deadzone", m_deadzone))
     {
@@ -193,15 +205,34 @@ bool VirtualizerModule::updateModule()
     // get the player speed
     double speedData = (double)(m_cvirtDeviceID->GetMovementSpeed());
 
-    double x = speedData * cos(angulareError) * velocity_factor;
-    double y = speedData * sin(angulareError) * velocity_factor;
+    double tmpSpeedDirection = (double)(m_cvirtDeviceID->GetMovementDirection());
+    double speedDirection= 1.0; //set the speed direction to forward by default.
+    if (std::abs(tmpSpeedDirection) < 0.01)
+        speedDirection = 1.0;
+    else if (std::abs(tmpSpeedDirection-1) < 0.01)
+    {
+        speedDirection = -1.0;
+    } else
+    {
+        yWarning() << "The virtualizer speed direction is not normal; speed direction value: "
+                   << tmpSpeedDirection;
+    }
 
+    //yInfo() << "speed direction: " << speedDirection;
+    yInfo() << "speed scale (x,y): " << m_scale_X << " , " << m_scale_Y<<" deadzone: "<<m_deadzone;
+
+ //   double x = speedData * cos(angulareError) * velocity_factor;
+ //   double y = speedData * sin(angulareError) * velocity_factor;
+    double x = speedDirection * m_scale_X * speedData;
+    double y = m_scale_Y * angulareError;
+    yInfo() << "speed (x,y): " << x << " , " << y;
     // send data to the walking module
     yarp::os::Bottle cmd, outcome;
     cmd.addString("setGoal");
     cmd.addDouble(x);
-    cmd.addDouble(-y);
+    cmd.addDouble(-y); // because the virtualizer orientation value is CCW, therefore we put "-" to make it CW, same as the robot world.
     m_rpcPort.write(cmd, outcome);
+
 
     // send the orientation of the player
     yarp::sig::Vector& playerOrientationVector = m_playerOrientationPort.prepare();

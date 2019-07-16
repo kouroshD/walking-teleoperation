@@ -34,6 +34,7 @@ private:
     double m_deadzone; /**< Value of the deadzone. */
     double m_robotYaw;
     double velocity_factor;
+    double m_scale_X, m_scale_Y;
     double oldPlayerYaw;
 
     yarp::os::Port m_rpcServerPort; /**< Port used to send command to the virtualizer application. */

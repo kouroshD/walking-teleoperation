@@ -117,6 +117,7 @@ bool HeadRetargeting::move()
 {
     m_teleopFrame_R_headOculus
         = m_oculusInertial_R_teleopFrame.inverse() * m_oculusInertial_R_headOculus;
+    //    yInfo() << " *** m_teleopFrame_R_headOculus: \n" << m_teleopFrame_R_headOculus.toString();
 
     // notice here the following assumption is done:
     // desiredNeckJoint(0) = neckPitch
@@ -131,5 +132,12 @@ bool HeadRetargeting::move()
     m_headTrajectorySmoother->computeNextValues(desiredNeckJoint);
     m_desiredJointValue = m_headTrajectorySmoother->getPos();
 
-    return RetargetingController::move();
+    return true;
+    //    return RetargetingController::move();
+}
+
+void HeadRetargeting::get_teleopFrame_R_headOculus(iDynTree::Rotation& teleopFrame_R_head)
+{
+    //    yDebug() << "m_teleopFrame_R_headOculus : \n" << m_teleopFrame_R_headOculus.toString();
+    teleopFrame_R_head = m_teleopFrame_R_headOculus;
 }

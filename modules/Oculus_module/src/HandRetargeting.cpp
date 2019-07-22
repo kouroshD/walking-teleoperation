@@ -58,10 +58,32 @@ bool HandRetargeting::configure(const yarp::os::Searchable& config)
     return true;
 }
 
-void HandRetargeting::setPlayerOrientation(const double& playerOrientation)
+void HandRetargeting::set_oculusInertial_T_teleopFrame(const double& playerOrientation)
 {
     // notice the minus sign is not an error. Indeed the virtualizer angle is positive clockwise
+    // we assume the human teleoperation frame (base frame) has same position as human head frame
     m_oculusInertial_T_teleopFrame.setRotation(iDynTree::Rotation::RotZ(-playerOrientation));
+    yInfo() << "m_oculusInertial_T_teleopFrame: \n" << m_oculusInertial_T_teleopFrame.toString();
+    m_oculusInertial_T_teleopFrame.setPosition(iDynTree::Position::Zero());
+}
+
+void HandRetargeting::set_oculusInertial_T_teleopFrame(
+    const double& neckLength,
+    const yarp::sig::Matrix& oculusInertial_T_head,
+    const yarp::sig::Matrix& head_T_chest)
+{
+    iDynTree::Transform chest_T_teleopFrame, tmp_oculusInertial_T_head, tmp_head_T_chest;
+    iDynTree::toiDynTree(oculusInertial_T_head, tmp_oculusInertial_T_head);
+    iDynTree::toiDynTree(head_T_chest, tmp_head_T_chest);
+    chest_T_teleopFrame.setPosition(iDynTree::Position(0.0, 0.0, neckLength));
+    chest_T_teleopFrame.setRotation(iDynTree::Rotation::Identity());
+    yInfo() << "tmp_oculusInertial_T_head: \n" << tmp_oculusInertial_T_head.toString();
+    yInfo() << "tmp_head_T_chest: \n" << tmp_head_T_chest.toString();
+    yInfo() << "chest_T_teleopFrame: \n" << chest_T_teleopFrame.toString();
+
+    m_oculusInertial_T_teleopFrame
+        = tmp_oculusInertial_T_head * tmp_head_T_chest * chest_T_teleopFrame;
+    yInfo() << "m_oculusInertial_T_teleopFrame: \n" << m_oculusInertial_T_teleopFrame.toString();
 }
 
 void HandRetargeting::setHandTransform(const yarp::sig::Matrix& handTransformation)

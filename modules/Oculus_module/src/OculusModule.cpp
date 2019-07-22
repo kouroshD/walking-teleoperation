@@ -57,12 +57,28 @@ bool OculusModule::configureTranformClient(const yarp::os::Searchable& config)
         std::string portName;
         if (!YarpHelper::getStringFromSearchable(config, "oculusOrientationPort", portName))
         {
-            yError() << "[OculusModule::configureTranformClient] Unable to get a string from a "
+            yError() << "[OculusModule::configureTranformClient] Unable to get a string "
+                        "(oculusOrientationPort) from a "
                         "searchable";
             return false;
         }
 
         if (!m_oculusOrientationPort.open("/" + getName() + portName))
+        {
+            yError() << "[OculusModule::configureTranformClient] Unable to open the port "
+                     << "/" << getName() << portName;
+            return false;
+        }
+        // oculus position values
+        if (!YarpHelper::getStringFromSearchable(config, "oculusPositionPort", portName))
+        {
+            yError() << "[OculusModule::configureTranformClient] Unable to get a string "
+                        "(oculusPositionPort) from a "
+                        "searchable";
+            return false;
+        }
+
+        if (!m_oculusPositionPort.open("/" + getName() + portName))
         {
             yError() << "[OculusModule::configureTranformClient] Unable to open the port "
                      << "/" << getName() << portName;
@@ -155,6 +171,7 @@ bool OculusModule::configureJoypad(const yarp::os::Searchable& config)
 
 bool OculusModule::configureOculus(const yarp::os::Searchable& config)
 {
+
     if (!configureTranformClient(config))
     {
         yError() << "[OculusModule::configureOculus] Unable to configure the transform client";
@@ -164,6 +181,12 @@ bool OculusModule::configureOculus(const yarp::os::Searchable& config)
     if (!configureJoypad(config))
     {
         yError() << "[OculusModule::configureOculus] Unable to configure the joypad client";
+        return false;
+    }
+
+    if (!YarpHelper::getDoubleFromSearchable(config, "neck_length", m_neck_length))
+    {
+        yError() << "[OculusModule::configureJoypad] Unable to find parameter neck_length";
         return false;
     }
 
@@ -372,7 +395,9 @@ bool OculusModule::getTransforms()
     {
         // head
         yarp::os::Bottle* desiredHeadOrientation = NULL;
+        yarp::os::Bottle* desiredHeadPosition = NULL;
 
+        // get head orientation
         iDynTree::Vector3 desiredHeadOrientationVector;
         desiredHeadOrientation = m_oculusOrientationPort.read(false);
         if (desiredHeadOrientation != NULL)
@@ -388,6 +413,24 @@ bool OculusModule::getTransforms()
                                                             desiredHeadOrientationVector(0),
                                                             desiredHeadOrientationVector(2)));
         }
+        // get head position
+        iDynTree::Vector3 desiredHeadPositionVector;
+        desiredHeadPosition = m_oculusPositionPort.read(false);
+        if (desiredHeadPosition != NULL)
+        {
+            for (unsigned i = 0; i < desiredHeadPosition->size(); i++)
+            {
+                desiredHeadPositionVector(i) = desiredHeadPosition->get(i).asDouble();
+            }
+
+            // the data coming from oculus vr is with the following order:
+            // [x,y,z]
+            // coordinate system definition is provided in:
+            // https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-sensor/
+            iDynTree::toEigen(m_oculusRoot_T_headOculus).block(0, 3, 3, 1)
+                = iDynTree::toEigen(desiredHeadPositionVector);
+        }
+
     } else
     {
         if (!m_frameTransformInterface->getTransform(
@@ -473,6 +516,13 @@ bool OculusModule::updateModule()
 
         m_head->setPlayerOrientation(m_playerOrientation);
         m_head->setDesiredHeadOrientation(m_oculusRoot_T_headOculus);
+        //        yInfo() << "oculusRoot-T-head: ";
+        //        yInfo() << m_oculusRoot_T_headOculus.toString();
+        //        yInfo() << "m_oculusRoot_T_lOculus: ";
+        //        yInfo() << m_oculusRoot_T_lOculus.toString();
+        //        yInfo() << "m_oculusRoot_T_rOculus: ";
+        //        yInfo() << m_oculusRoot_T_rOculus.toString();
+
         // m_head->setDesiredHeadOrientation(desiredHeadOrientationVector(0),
         // desiredHeadOrientationVector(1), desiredHeadOrientationVector(2));
         if (!m_head->move())
@@ -511,17 +561,86 @@ bool OculusModule::updateModule()
 
         // left hand
         yarp::sig::Vector& leftHandPose = m_leftHandPosePort.prepare();
-        m_leftHand->setPlayerOrientation(m_playerOrientation);
-        m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
-        m_leftHand->evaluateDesiredHandPose(leftHandPose);
-        m_leftHandPosePort.write();
+        //        m_teleopRobotFrame_T_handRobotFrame
+        //            = m_teleopRobotFrame_T_teleopFrame * m_oculusInertial_T_teleopFrame.inverse()
+        //              * m_oculusInertial_T_handOculusFrame * m_handOculusFrame_T_handRobotFrame;
+        //        iDynTree::Transform oculusInertial_T_teleopFrame = oculusInertial_T_oculusHead
+        //                                                           * oculusHead_T_chest(neck
+        //                                                           angles)
+        //                                                           * chest_T_teleopFrame(neck_length);
+        //        if (m_useVirtualizer)
+        {
+            iDynTree::Rotation teleopFrame_R_head;
+            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
+            //            yInfo() << "teleopFrame_R_head: \n" << teleopFrame_R_head.toString();
+            // chest fram and teleoperation frame have similar rotation terms, only there is
+            // displacement between them with neck lenght.
+            yarp::sig::Matrix head_T_chest;
+            head_T_chest.resize(4, 4);
+            iDynTree::Transform tmp_head_T_chest;
+            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
+            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
+            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
+
+            m_leftHand->set_oculusInertial_T_teleopFrame(
+                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
+            m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
+            m_leftHand->evaluateDesiredHandPose(leftHandPose);
+            yInfo() << "left hand pose 1: ";
+            yInfo() << leftHandPose.toString();
+            yInfo() << "*********************************";
+        }
+        //        else
+        {
+            m_leftHand->set_oculusInertial_T_teleopFrame(m_playerOrientation);
+            m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
+            m_leftHand->evaluateDesiredHandPose(leftHandPose);
+            yInfo() << "left hand pose 2: ";
+            yInfo() << leftHandPose.toString();
+            yInfo() << "*********************************";
+        }
+        //        m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
+        //        m_leftHand->evaluateDesiredHandPose(leftHandPose);
+        //        m_leftHandPosePort.write();
 
         // right hand
         yarp::sig::Vector& rightHandPose = m_rightHandPosePort.prepare();
-        m_rightHand->setPlayerOrientation(m_playerOrientation);
-        m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
-        m_rightHand->evaluateDesiredHandPose(rightHandPose);
-        m_rightHandPosePort.write();
+        //            if (m_useVirtualizer)
+        {
+            iDynTree::Rotation teleopFrame_R_head;
+            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
+            // chest fram and teleoperation frame have similar rotation terms, only there is
+            // displacement between them with neck lenght.
+            yarp::sig::Matrix head_T_chest;
+            head_T_chest.resize(4, 4);
+            iDynTree::Transform tmp_head_T_chest;
+            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
+            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
+            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
+
+            m_rightHand->set_oculusInertial_T_teleopFrame(
+                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
+            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
+            m_rightHand->evaluateDesiredHandPose(rightHandPose);
+            yInfo() << "right hand pose 1: ";
+            yInfo() << rightHandPose.toString();
+        }
+        //            else
+        {
+            m_rightHand->set_oculusInertial_T_teleopFrame(m_playerOrientation);
+            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
+            m_rightHand->evaluateDesiredHandPose(rightHandPose);
+            yInfo() << "right hand pose 2: ";
+            yInfo() << rightHandPose.toString();
+        }
+        //            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
+        //            m_rightHand->evaluateDesiredHandPose(rightHandPose);
+        //            m_rightHandPosePort.write();
+
+        //            yInfo() << "left hand pose: ";
+        //            yInfo() << leftHandPose.toString();
+        //            yInfo() << "right hand pose: ";
+        //            yInfo() << rightHandPose.toString();
 
         // use joypad
         if (!m_useVirtualizer)
@@ -538,7 +657,7 @@ bool OculusModule::updateModule()
             cmd.addString("setGoal");
             cmd.addDouble(x);
             cmd.addDouble(y);
-            m_rpcWalkingClient.write(cmd, outcome);
+            //            m_rpcWalkingClient.write(cmd, outcome);
         }
     } else if (m_state == OculusFSM::Configured)
     {
@@ -556,7 +675,7 @@ bool OculusModule::updateModule()
         {
             // TODO add a visual feedback for the user
             cmd.addString("prepareRobot");
-            m_rpcWalkingClient.write(cmd, outcome);
+            //            m_rpcWalkingClient.write(cmd, outcome);
         } else if (buttonMapping[1] > 0)
         {
             if (m_useVirtualizer)
@@ -569,7 +688,7 @@ bool OculusModule::updateModule()
 
             // TODO add a visual feedback for the user
             cmd.addString("startWalking");
-            m_rpcWalkingClient.write(cmd, outcome);
+            //            m_rpcWalkingClient.write(cmd, outcome);
             // if(outcome.get(0).asBool())
             m_state = OculusFSM::Running;
         }

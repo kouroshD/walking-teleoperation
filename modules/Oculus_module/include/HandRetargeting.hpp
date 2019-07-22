@@ -69,7 +69,15 @@ public:
      * Set the player orientation (coming from the virtualizer)
      * @param playerOrientation orientation of the player in radiant
      */
-    void setPlayerOrientation(const double& playerOrientation);
+    void set_oculusInertial_T_teleopFrame(const double& playerOrientation);
+
+    /**
+     * Set the player orientation (coming from the virtualizer)
+     * @param playerOrientation orientation of the player in radiant
+     */
+    void set_oculusInertial_T_teleopFrame(const double& neckLength,
+                                          const yarp::sig::Matrix& head_T_oculusInertial,
+                                          const yarp::sig::Matrix& head_T_chest);
 
     /**
      * Set the root tho hand transformation

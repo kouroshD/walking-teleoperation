@@ -99,6 +99,12 @@ public:
      * @return true in case of success and false otherwise
      */
     bool move() override;
+
+    /**
+     * Get the rotation matrix between teleoperation fram and oculus head frame
+     * @param teleopFrame_R_head rotation matrix between teleoperation fram and oculus head frame
+     */
+    void get_teleopFrame_R_headOculus(iDynTree::Rotation& teleopFrame_R_head);
 };
 
 #endif

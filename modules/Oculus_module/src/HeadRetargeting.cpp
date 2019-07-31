@@ -131,6 +131,8 @@ bool HeadRetargeting::move()
     // near the singularity. it would be nice to implement a smoother in SO(3).
     m_headTrajectorySmoother->computeNextValues(desiredNeckJoint);
     m_desiredJointValue = m_headTrajectorySmoother->getPos();
+    std::cout << desiredNeckJoint(0) << " " << desiredNeckJoint(1) << " " << desiredNeckJoint(2)
+              << " , ";
 
     return true;
     //    return RetargetingController::move();

@@ -90,7 +90,7 @@ public:
      * user and the virtualizer (if it is used)
      * @param handPose desired hand position. This can be directly sent to walking controller.
      */
-    void evaluateDesiredHandPose(yarp::sig::Vector& handPose);
+    void evaluateDesiredHandPose(yarp::sig::Vector& handPose, yarp::sig::Vector& handPoseInertial);
 };
 
 #endif

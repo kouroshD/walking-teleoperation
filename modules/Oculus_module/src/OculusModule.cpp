@@ -363,6 +363,8 @@ bool OculusModule::close()
 
     m_joypadDevice.close();
     m_transformClientDevice.close();
+    m_rightHandPosePort.close();
+    m_leftHandPosePort.close();
 
     return true;
 }
@@ -428,7 +430,9 @@ bool OculusModule::getTransforms()
             // coordinate system definition is provided in:
             // https://developer.oculus.com/documentation/pcsdk/latest/concepts/dg-sensor/
             iDynTree::toEigen(m_oculusRoot_T_headOculus).block(0, 3, 3, 1)
-                = iDynTree::toEigen(desiredHeadPositionVector);
+                = iDynTree::toEigen(iDynTree::Position(-desiredHeadPositionVector(2),
+                                                       -desiredHeadPositionVector(0),
+                                                       desiredHeadPositionVector(1)));
         }
 
     } else
@@ -569,73 +573,103 @@ bool OculusModule::updateModule()
         //                                                           angles)
         //                                                           * chest_T_teleopFrame(neck_length);
         //        if (m_useVirtualizer)
-        {
-            iDynTree::Rotation teleopFrame_R_head;
-            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
-            //            yInfo() << "teleopFrame_R_head: \n" << teleopFrame_R_head.toString();
-            // chest fram and teleoperation frame have similar rotation terms, only there is
-            // displacement between them with neck lenght.
-            yarp::sig::Matrix head_T_chest;
-            head_T_chest.resize(4, 4);
-            iDynTree::Transform tmp_head_T_chest;
-            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
-            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
-            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
+        //        {
+        //            iDynTree::Rotation teleopFrame_R_head;
+        //            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
+        //            //            yInfo() << "teleopFrame_R_head: \n" <<
+        //            teleopFrame_R_head.toString();
+        //            // chest fram and teleoperation frame have similar rotation terms, only there
+        //            is
+        //            // displacement between them with neck lenght.
+        //            yarp::sig::Matrix head_T_chest;
+        //            head_T_chest.resize(4, 4);
+        //            iDynTree::Transform tmp_head_T_chest;
+        //            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
+        //            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
+        //            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
 
-            m_leftHand->set_oculusInertial_T_teleopFrame(
-                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
-            m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
-            m_leftHand->evaluateDesiredHandPose(leftHandPose);
-            yInfo() << "left hand pose 1: ";
-            yInfo() << leftHandPose.toString();
-            yInfo() << "*********************************";
-        }
+        //            m_leftHand->set_oculusInertial_T_teleopFrame(
+        //                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
+        //            m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
+        //            m_leftHand->evaluateDesiredHandPose(leftHandPose);
+        //            //            yInfo() << "****************** left hand pose 1: ";
+        //            //            yInfo() << leftHandPose.toString();
+        //        }
         //        else
         {
+            //            yInfo() << "---player orientation" << m_playerOrientation;
+            yarp::sig::Vector leftHandPoseInertial;
+
             m_leftHand->set_oculusInertial_T_teleopFrame(m_playerOrientation);
             m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
-            m_leftHand->evaluateDesiredHandPose(leftHandPose);
-            yInfo() << "left hand pose 2: ";
-            yInfo() << leftHandPose.toString();
-            yInfo() << "*********************************";
+            m_leftHand->evaluateDesiredHandPose(leftHandPose, leftHandPoseInertial);
+            std::cout << m_playerOrientation << " , " << m_robotYaw << " , ";
+            for (int i = 0; i < 6; i++)
+            {
+                std::cout << leftHandPoseInertial(i) << " ";
+            }
+            std::cout << " , ";
+            for (int i = 0; i < 6; i++)
+            {
+                std::cout << leftHandPose(i) << " ";
+            }
+            std::cout << " , ";
+
+            //            yInfo() << "left hand pose 2: ";
+            //            yInfo() << leftHandPose.toString();
+            //            yInfo() << "**************************** ****************************";
         }
         //        m_leftHand->setHandTransform(m_oculusRoot_T_lOculus);
         //        m_leftHand->evaluateDesiredHandPose(leftHandPose);
-        //        m_leftHandPosePort.write();
+        m_leftHandPosePort.write();
 
         // right hand
         yarp::sig::Vector& rightHandPose = m_rightHandPosePort.prepare();
         //            if (m_useVirtualizer)
-        {
-            iDynTree::Rotation teleopFrame_R_head;
-            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
-            // chest fram and teleoperation frame have similar rotation terms, only there is
-            // displacement between them with neck lenght.
-            yarp::sig::Matrix head_T_chest;
-            head_T_chest.resize(4, 4);
-            iDynTree::Transform tmp_head_T_chest;
-            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
-            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
-            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
+        //        {
+        //            iDynTree::Rotation teleopFrame_R_head;
+        //            m_head->get_teleopFrame_R_headOculus(teleopFrame_R_head);
+        //            // chest fram and teleoperation frame have similar rotation terms, only there
+        //            is
+        //            // displacement between them with neck lenght.
+        //            yarp::sig::Matrix head_T_chest;
+        //            head_T_chest.resize(4, 4);
+        //            iDynTree::Transform tmp_head_T_chest;
+        //            tmp_head_T_chest.setRotation(teleopFrame_R_head.inverse());
+        //            tmp_head_T_chest.setPosition(iDynTree::Position(0.0, 0.0, -m_neck_length));
+        //            iDynTree::toYarp(tmp_head_T_chest, head_T_chest);
 
-            m_rightHand->set_oculusInertial_T_teleopFrame(
-                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
-            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
-            m_rightHand->evaluateDesiredHandPose(rightHandPose);
-            yInfo() << "right hand pose 1: ";
-            yInfo() << rightHandPose.toString();
-        }
+        //            m_rightHand->set_oculusInertial_T_teleopFrame(
+        //                m_neck_length, m_oculusRoot_T_headOculus, head_T_chest);
+        //            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
+        //            m_rightHand->evaluateDesiredHandPose(rightHandPose);
+        //            //            yInfo() << "****************** right hand pose 1: ";
+        //            //            yInfo() << rightHandPose.toString();
+        //        }
         //            else
         {
+            yarp::sig::Vector rightHandPoseInertial;
+
             m_rightHand->set_oculusInertial_T_teleopFrame(m_playerOrientation);
             m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
-            m_rightHand->evaluateDesiredHandPose(rightHandPose);
-            yInfo() << "right hand pose 2: ";
-            yInfo() << rightHandPose.toString();
+            m_rightHand->evaluateDesiredHandPose(rightHandPose, rightHandPoseInertial);
+            for (int i = 0; i < 6; i++)
+            {
+                std::cout << rightHandPoseInertial(i) << " ";
+            }
+            std::cout << " , ";
+            for (int i = 0; i < 6; i++)
+            {
+                std::cout << rightHandPose(i) << " ";
+            }
+            std::cout << " \n";
+            //            yInfo() << "right hand pose 2: ";
+            //            yInfo() << rightHandPose.toString();
+            //            yInfo() << "**************************** ****************************";
         }
         //            m_rightHand->setHandTransform(m_oculusRoot_T_rOculus);
         //            m_rightHand->evaluateDesiredHandPose(rightHandPose);
-        //            m_rightHandPosePort.write();
+        m_rightHandPosePort.write();
 
         //            yInfo() << "left hand pose: ";
         //            yInfo() << leftHandPose.toString();
@@ -674,8 +708,9 @@ bool OculusModule::updateModule()
         if (buttonMapping[0] > 0)
         {
             // TODO add a visual feedback for the user
+            yInfo() << "prepareRobot";
             cmd.addString("prepareRobot");
-            //            m_rpcWalkingClient.write(cmd, outcome);
+            m_rpcWalkingClient.write(cmd, outcome);
         } else if (buttonMapping[1] > 0)
         {
             if (m_useVirtualizer)
@@ -687,8 +722,9 @@ bool OculusModule::updateModule()
             }
 
             // TODO add a visual feedback for the user
+            yInfo() << "startWalking";
             cmd.addString("startWalking");
-            //            m_rpcWalkingClient.write(cmd, outcome);
+            m_rpcWalkingClient.write(cmd, outcome);
             // if(outcome.get(0).asBool())
             m_state = OculusFSM::Running;
         }

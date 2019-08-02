@@ -172,6 +172,12 @@ bool OculusModule::configureOculus(const yarp::os::Searchable& config)
 
 bool OculusModule::configure(yarp::os::ResourceFinder& rf)
 {
+#ifdef ENABLE_LOGGER
+    yInfo() << "[OculusModule::configure] matlogger2 is installed!";
+#else
+    yInfo() << "[OculusModule::configure] matlogger2 is not installed!";
+#endif
+
     yarp::os::Value* value;
 
     // check if the configuration file is empty
@@ -557,6 +563,7 @@ bool OculusModule::updateModule()
         }
 
         // use joypad
+        std::vector<double> locCmd;
         if (!m_useVirtualizer)
         {
             yarp::os::Bottle cmd, outcome;
@@ -575,14 +582,10 @@ bool OculusModule::updateModule()
             {
                 m_rpcWalkingClient.write(cmd, outcome);
             }
-
-            if (m_enableLogger)
-            {
-                std::vector<double> locCmd = {x, y};
-                m_logger->add(m_logger_prefix + "_loc_joypad_x_y", locCmd);
-            }
+            locCmd.push_back(x);
+            locCmd.push_back(y);
         }
-
+#ifdef ENABLE_LOGGER
         if (m_enableLogger)
         {
             m_logger->add(m_logger_prefix + "_time", yarp::os::Time::now());
@@ -626,8 +629,14 @@ bool OculusModule::updateModule()
             m_logger->add(m_logger_prefix + "_right_humanHandpose_humanTeleoperation",
                           right_humanHandpose_humanTel);
 
+            if (!m_useVirtualizer)
+            {
+                m_logger->add(m_logger_prefix + "_loc_joypad_x_y", locCmd);
+            }
+
             m_logger->flush_available_data();
         }
+#endif
     } else if (m_state == OculusFSM::Configured)
     {
         // check if it is time to prepare or start walking
@@ -721,6 +730,7 @@ double OculusModule::deadzone(const double& input)
 
 bool OculusModule::openLogger()
 {
+#ifdef ENABLE_LOGGER
     std::string currentTime = getTimeDateMatExtension();
     std::string fileName = "OculusModule" + currentTime;
 
@@ -754,7 +764,10 @@ bool OculusModule::openLogger()
 
     m_logger->create(m_logger_prefix + "_loc_joypad_x_y",
                      2); // [x,y] component for robot locomotion
-
     yInfo() << "[OculusModule::openLogger] Logging is active.";
+#else
+    yInfo() << "[OculusModule::openLogger] option is not active in CMakeLists.";
+
+#endif
     return true;
 }

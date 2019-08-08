@@ -125,7 +125,7 @@ private:
     yarp::sig::Matrix m_oculusRoot_T_lOculus;
     yarp::sig::Matrix m_oculusRoot_T_rOculus;
     yarp::sig::Matrix m_oculusRoot_T_headOculus;
-    std::vector<double> m_oculusPoseInertial;
+    std::vector<double> m_oculusHeadsetPoseInertial;
 
     double m_playerOrientation; /**< Player orientation (read by the Virtualizer)
                                    only yaw. */

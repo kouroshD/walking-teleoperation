@@ -92,12 +92,23 @@ bool XsensRetargeting::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
 
-    if (!YarpHelper::getStringFromSearchable(rf, "controllerPort", portName))
+    if (!YarpHelper::getStringFromSearchable(rf, "controllerJointsPort", portName))
     {
         yError() << "[XsensRetargeting::configure] Unable to get a string from a searchable";
         return false;
     }
     if (!m_wholeBodyHumanSmoothedJointsPort.open("/" + getName() + portName))
+    {
+        yError() << "[XsensRetargeting::configure] Unable to open the port " << portName;
+        return false;
+    }
+
+    if (!YarpHelper::getStringFromSearchable(rf, "controllerCoMPort", portName))
+    {
+        yError() << "[XsensRetargeting::configure] Unable to get a string from a searchable";
+        return false;
+    }
+    if (!m_HumanCoMPort.open("/" + getName() + portName))
     {
         yError() << "[XsensRetargeting::configure] Unable to open the port " << portName;
         return false;
@@ -113,6 +124,7 @@ bool XsensRetargeting::configure(yarp::os::ResourceFinder& rf)
         return false;
     }
     m_jointDiffThreshold = jointThreshold;
+    m_CoMValues.resize(3, 0.0);
 
     yInfo() << "[XsensRetargeting::configure]"
             << " Sampling time  : " << m_dT;
@@ -135,9 +147,17 @@ bool XsensRetargeting::getJointValues()
 
     // in the msg thrift the first list is the joint names [get(0)], second the joint values
     // [get(1)]
-
     yarp::os::Value humanjointsValues = desiredHumanJoints->get(1);
     yarp::os::Bottle* tmpHumanNewJointValues = humanjointsValues.asList();
+
+    // in the msg thrift the 8th list is the CoM positions [get(7)]
+    yarp::os::Value CoMValues = desiredHumanJoints->get(7);
+    yarp::os::Bottle* tmpCoMValues = CoMValues.asList();
+
+    for (unsigned int var = 0; var < 3; ++var)
+    {
+        m_CoMValues(var) = tmpCoMValues->get(var).asDouble();
+    }
 
     yarp::sig::Vector newJointValues;
     newJointValues.resize(m_actuatedDOFs, 0.0);
@@ -246,6 +266,16 @@ bool XsensRetargeting::updateModule()
         yError() << "[XsensRetargeting::updateModule] m_wholeBodyHumanJointsPort port is closed";
         return false;
     }
+
+    if (m_HumanCoMPort.isClosed())
+    {
+        yError() << "[XsensRetargeting::updateModule] m_HumanCoMPort port is closed";
+        return false;
+    }
+
+    yarp::sig::Vector& CoMrefValues = m_HumanCoMPort.prepare();
+    CoMrefValues = m_CoMValues;
+    m_HumanCoMPort.write();
 
     if (!m_firstIteration)
     {

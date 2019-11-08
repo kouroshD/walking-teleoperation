@@ -1,3 +1,4 @@
+//#include "yarp/ HumanState.h"
 #include <Utils.hpp>
 #include <XsensRetargeting.hpp>
 #include <iterator>
@@ -138,44 +139,37 @@ bool XsensRetargeting::configure(yarp::os::ResourceFinder& rf)
 }
 bool XsensRetargeting::getJointValues()
 {
-    yarp::os::Bottle* desiredHumanJoints = m_wholeBodyHumanJointsPort.read(false);
+    human::HumanState* desiredHumanStates = m_wholeBodyHumanJointsPort.read(false);
 
-    if (desiredHumanJoints == NULL)
+    if (desiredHumanStates == NULL)
     {
         return true;
     }
 
     // in the msg thrift the first list is the joint names [get(0)], second the joint values
     // [get(1)]
-    yarp::os::Value humanjointsValues = desiredHumanJoints->get(1);
-    yarp::os::Bottle* tmpHumanNewJointValues = humanjointsValues.asList();
+    std::vector<double> newHumanjointsValues = desiredHumanStates->positions;
 
     // in the msg thrift the 8th list is the CoM positions [get(7)]
-    yarp::os::Value CoMValues = desiredHumanJoints->get(7);
-    yarp::os::Bottle* tmpCoMValues = CoMValues.asList();
+    human::Vector3 CoMValues = desiredHumanStates->CoMPositionWRTGlobal;
 
-    for (unsigned int var = 0; var < 3; ++var)
-    {
-        m_CoMValues(var) = tmpCoMValues->get(var).asDouble();
-    }
-
-    yarp::sig::Vector newJointValues;
-    newJointValues.resize(m_actuatedDOFs, 0.0);
+    m_CoMValues(0) = CoMValues.x;
+    m_CoMValues(1) = CoMValues.y;
+    m_CoMValues(2) = CoMValues.z;
 
     if (!m_firstIteration)
     {
         for (unsigned j = 0; j < m_actuatedDOFs; j++)
         {
-            newJointValues(j) = tmpHumanNewJointValues->get(m_humanToRobotMap[j]).asDouble();
             // check for the spikes in joint values
-            if (std::abs(newJointValues(j) - m_jointValues(j)) < m_jointDiffThreshold)
+            if (std::abs(newHumanjointsValues[j] - m_jointValues(j)) < m_jointDiffThreshold)
             {
-                m_jointValues(j) = newJointValues(j);
+                m_jointValues(j) = newHumanjointsValues[j];
             } else
             {
                 yWarning() << "spike in data: joint : " << j << " , " << m_robotJointsListNames[j]
                            << " ; old data: " << m_jointValues(j)
-                           << " ; new data:" << newJointValues(j);
+                           << " ; new data:" << newHumanjointsValues[j];
             }
         }
     } else
@@ -187,18 +181,7 @@ bool XsensRetargeting::getJointValues()
          their order are not the same! */
 
         // check the human joints name list
-        yarp::os::Value humanjointsNames = desiredHumanJoints->get(0);
-        yarp::os::Bottle* tmpHumanNewJointNames = humanjointsNames.asList();
-        if (tmpHumanNewJointNames->isNull())
-        {
-            yError() << "[XsensRetargeting::getJointValues()] Human joints name list is empty";
-            return false;
-        }
-
-        for (unsigned j = 0; j < tmpHumanNewJointNames->size(); j++)
-        {
-            m_humanJointsListName.push_back(tmpHumanNewJointNames->get(j).asString());
-        }
+        m_humanJointsListName = desiredHumanStates->jointNames;
 
         /* print human and robot joint name list */
         yInfo() << "Human joints name list: [human joints list] [robot joints list]"
@@ -229,16 +212,14 @@ bool XsensRetargeting::getJointValues()
         /* fill the robot joint list values*/
         for (unsigned j = 0; j < m_actuatedDOFs; j++)
         {
-
-            newJointValues(j) = tmpHumanNewJointValues->get(m_humanToRobotMap[j]).asDouble();
-            m_jointValues(j) = newJointValues(j);
+            m_jointValues(j) = newHumanjointsValues[j];
             yInfo() << " robot initial joint value: (" << j << "): " << m_jointValues[j];
         }
         m_WBTrajectorySmoother->init(m_jointValues);
     }
 
-    yInfo() << "joint [0]: " << m_robotJointsListNames[0] << " : " << newJointValues(0) << " , "
-            << m_jointValues(0);
+    yInfo() << "joint [0]: " << m_robotJointsListNames[0] << " : " << newHumanjointsValues[0]
+            << " , " << m_jointValues(0);
 
     return true;
 }
@@ -273,12 +254,11 @@ bool XsensRetargeting::updateModule()
         return false;
     }
 
-    yarp::sig::Vector& CoMrefValues = m_HumanCoMPort.prepare();
-    CoMrefValues = m_CoMValues;
-    m_HumanCoMPort.write();
-
     if (!m_firstIteration)
     {
+        yarp::sig::Vector& CoMrefValues = m_HumanCoMPort.prepare();
+        CoMrefValues = m_CoMValues;
+        m_HumanCoMPort.write();
 
         yarp::sig::Vector& refValues = m_wholeBodyHumanSmoothedJointsPort.prepare();
         getSmoothedJointValues(refValues);

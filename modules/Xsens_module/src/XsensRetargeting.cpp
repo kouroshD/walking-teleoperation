@@ -162,14 +162,15 @@ bool XsensRetargeting::getJointValues()
         for (unsigned j = 0; j < m_actuatedDOFs; j++)
         {
             // check for the spikes in joint values
-            if (std::abs(newHumanjointsValues[j] - m_jointValues(j)) < m_jointDiffThreshold)
+            if (std::abs(newHumanjointsValues[m_humanToRobotMap[j]] - m_jointValues(j))
+                < m_jointDiffThreshold)
             {
                 m_jointValues(j) = newHumanjointsValues[m_humanToRobotMap[j]];
             } else
             {
                 yWarning() << "spike in data: joint : " << j << " , " << m_robotJointsListNames[j]
                            << " ; old data: " << m_jointValues(j)
-                           << " ; new data:" << newHumanjointsValues[j];
+                           << " ; new data:" << newHumanjointsValues[m_humanToRobotMap[j]];
             }
         }
     } else
@@ -220,6 +221,8 @@ bool XsensRetargeting::getJointValues()
 
     yInfo() << "joint [0]: " << m_robotJointsListNames[0] << " : "
             << newHumanjointsValues[m_humanToRobotMap[0]] << " , " << m_jointValues(0);
+    yInfo() << "joint [2]: " << m_robotJointsListNames[2] << " : "
+            << newHumanjointsValues[m_humanToRobotMap[2]] << " , " << m_jointValues(2);
 
     return true;
 }

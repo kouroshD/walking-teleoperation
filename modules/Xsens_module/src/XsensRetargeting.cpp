@@ -164,7 +164,7 @@ bool XsensRetargeting::getJointValues()
             // check for the spikes in joint values
             if (std::abs(newHumanjointsValues[j] - m_jointValues(j)) < m_jointDiffThreshold)
             {
-                m_jointValues(j) = newHumanjointsValues[j];
+                m_jointValues(j) = newHumanjointsValues[m_humanToRobotMap[j]];
             } else
             {
                 yWarning() << "spike in data: joint : " << j << " , " << m_robotJointsListNames[j]
@@ -212,14 +212,14 @@ bool XsensRetargeting::getJointValues()
         /* fill the robot joint list values*/
         for (unsigned j = 0; j < m_actuatedDOFs; j++)
         {
-            m_jointValues(j) = newHumanjointsValues[j];
+            m_jointValues(j) = newHumanjointsValues[m_humanToRobotMap[j]];
             yInfo() << " robot initial joint value: (" << j << "): " << m_jointValues[j];
         }
         m_WBTrajectorySmoother->init(m_jointValues);
     }
 
-    yInfo() << "joint [0]: " << m_robotJointsListNames[0] << " : " << newHumanjointsValues[0]
-            << " , " << m_jointValues(0);
+    yInfo() << "joint [0]: " << m_robotJointsListNames[0] << " : "
+            << newHumanjointsValues[m_humanToRobotMap[0]] << " , " << m_jointValues(0);
 
     return true;
 }

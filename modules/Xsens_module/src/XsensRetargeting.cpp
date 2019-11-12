@@ -229,8 +229,9 @@ bool XsensRetargeting::getJointValues()
 
 bool XsensRetargeting::getSmoothedJointValues(yarp::sig::Vector& smoothedJointValues)
 {
-    m_WBTrajectorySmoother->computeNextValues(m_jointValues);
-    smoothedJointValues = m_WBTrajectorySmoother->getPos();
+    // m_WBTrajectorySmoother->computeNextValues(m_jointValues);
+    // smoothedJointValues = m_WBTrajectorySmoother->getPos();
+    smoothedJointValues=m_jointValues;
 
     return true;
 }
